@@ -130,7 +130,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.WriteHeader(exp.status)
 			if len(exp.body) > 0 {
-				w.Write(exp.body)
+				_, _ = w.Write(exp.body)
 			}
 		}
 

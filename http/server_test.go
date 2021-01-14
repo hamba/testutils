@@ -68,7 +68,7 @@ func TestServer_HandlesUnexpectedMethodRequest(t *testing.T) {
 
 	s.On("POST", "/")
 
-	http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
 }
 
 func TestServer_HandlesUnexpectedPathRequest(t *testing.T) {
@@ -86,7 +86,7 @@ func TestServer_HandlesUnexpectedPathRequest(t *testing.T) {
 
 	s.On("GET", "/")
 
-	http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
 }
 
 func TestServer_HandlesExpectationNTimes(t *testing.T) {
@@ -102,9 +102,9 @@ func TestServer_HandlesExpectationNTimes(t *testing.T) {
 	defer s.Close()
 	s.On("GET", "/test/path").Times(2)
 
-	http.Get(s.URL() + "/test/path")
-	http.Get(s.URL() + "/test/path")
-	http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
 }
 
 func TestServer_HandlesExpectationUnlimitedTimes(t *testing.T) {
@@ -120,8 +120,8 @@ func TestServer_HandlesExpectationUnlimitedTimes(t *testing.T) {
 	defer s.Close()
 	s.On("GET", "/test/path")
 
-	http.Get(s.URL() + "/test/path")
-	http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
+	_, _ = http.Get(s.URL() + "/test/path")
 }
 
 func TestServer_ExpectationReturnsBodyBytes(t *testing.T) {
@@ -136,7 +136,7 @@ func TestServer_ExpectationReturnsBodyBytes(t *testing.T) {
 	b, _ := ioutil.ReadAll(res.Body)
 	assert.Equal(t, []byte("test"), b)
 
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestServer_ExpectationReturnsBodyString(t *testing.T) {
@@ -151,7 +151,7 @@ func TestServer_ExpectationReturnsBodyString(t *testing.T) {
 	b, _ := ioutil.ReadAll(res.Body)
 	assert.Equal(t, []byte("test"), b)
 
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestServer_ExpectationReturnsStatusCode(t *testing.T) {
@@ -166,7 +166,7 @@ func TestServer_ExpectationReturnsStatusCode(t *testing.T) {
 	b, _ := ioutil.ReadAll(res.Body)
 	assert.Len(t, b, 0)
 
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestServer_ExpectationReturnsHeaders(t *testing.T) {
@@ -180,7 +180,7 @@ func TestServer_ExpectationReturnsHeaders(t *testing.T) {
 	v := res.Header.Get("foo")
 	assert.Equal(t, "bar", v)
 
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestServer_ExpectationUsesHandleFunc(t *testing.T) {
