@@ -96,6 +96,8 @@ type Server struct {
 
 // NewServer creates a new mock http server.
 func NewServer(t *testing.T) *Server {
+	t.Helper()
+
 	srv := &Server{
 		t: t,
 	}
@@ -121,8 +123,8 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		for i := 0; i < len(exp.headers); i += 2 {
-			w.Header().Add(exp.headers[i], exp.headers[i+1])
+		for j := 0; j < len(exp.headers); j += 2 {
+			w.Header().Add(exp.headers[j], exp.headers[j+1])
 		}
 
 		if exp.fn != nil {
