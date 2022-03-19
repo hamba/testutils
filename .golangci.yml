@@ -29,6 +29,7 @@ linters:
     - gomnd
     - nlreturn
     - maligned
+    - varnamelen
     - wrapcheck
     - wsl
 
