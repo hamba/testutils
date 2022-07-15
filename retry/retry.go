@@ -24,25 +24,63 @@ import (
 // DefaultPolicy is the default retry policy used with Run.
 var DefaultPolicy = &Timer{timeout: 5 * time.Second, sleep: 10 * time.Millisecond}
 
-// Failer represents a partial *testing.SubT.
-type Failer interface {
+// TestingT represents a partial *testing.T.
+type TestingT interface {
 	Log(args ...interface{})
 	FailNow()
 }
 
-// SubT is a partial implementation of the standard testing testing.SubT.
+type tHelper interface {
+	Helper()
+}
+
+// SubT is a partial implementation of the standard testing T.
 type SubT struct {
-	logs   []string
-	failed bool
+	mu       sync.Mutex
+	logs     []string
+	failed   bool
+	cleanups []func()
 }
 
 func (t *SubT) reset() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.logs = nil
 	t.failed = false
+	t.cleanups = t.cleanups[:0]
 }
 
 func (t *SubT) log(s string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.logs = append(t.logs, strings.TrimRight(s, "\n"))
+}
+
+func (t *SubT) runCleanups() {
+	for {
+		var cleanup func()
+		t.mu.Lock()
+		if len(t.cleanups) > 0 {
+			last := len(t.cleanups) - 1
+			cleanup = t.cleanups[last]
+			t.cleanups = t.cleanups[:last]
+		}
+		t.mu.Unlock()
+		if cleanup == nil {
+			return
+		}
+		cleanup()
+	}
+}
+
+// Cleanup adds a cleanup function.
+func (t *SubT) Cleanup(fn func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.cleanups = append(t.cleanups, fn)
 }
 
 // Log adds a log line to the current test run.
@@ -91,12 +129,16 @@ func (t *SubT) FailNow() {
 }
 
 // Run reties fn with the default retry policy.
-func Run(t Failer, fn func(t *SubT)) {
+func Run(t TestingT, fn func(t *SubT)) {
 	RunWith(t, DefaultPolicy, fn)
 }
 
 // RunWith retires fn with policy p.
-func RunWith(t Failer, p Policy, fn func(t *SubT)) {
+func RunWith(t TestingT, p Policy, fn func(t *SubT)) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	tt := &SubT{}
 
 	for p.Next() {
@@ -105,7 +147,11 @@ func RunWith(t Failer, p Policy, fn func(t *SubT)) {
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
-			defer wg.Done()
+			defer func() {
+				tt.runCleanups()
+				wg.Done()
+			}()
+
 			fn(tt)
 		}()
 		wg.Wait()
