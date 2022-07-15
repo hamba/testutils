@@ -81,6 +81,27 @@ func TestRunWith_HandlesFailing(t *testing.T) {
 	assert.InDelta(t, 30*time.Millisecond, dur, timeDeltaAllowed)
 }
 
+func TestRunWith_RunsCleanup(t *testing.T) {
+	mockT := new(MockTestingT)
+	mockT.On("FailNow").Once()
+
+	var wg sync.WaitGroup
+	var runs int
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		retry.RunWith(mockT, retry.NewCounter(3, 10*time.Millisecond), func(t *retry.SubT) {
+			t.Cleanup(func() { runs++ })
+			t.FailNow()
+		})
+	}()
+	wg.Wait()
+
+	mockT.AssertExpectations(t)
+	assert.Equal(t, 3, runs)
+}
+
 func TestCounter_Next(t *testing.T) {
 	p := retry.NewCounter(3, 100*time.Millisecond)
 
