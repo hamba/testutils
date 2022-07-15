@@ -116,32 +116,10 @@ func (s *Server) URL() string {
 	return s.srv.URL
 }
 
-func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
-	method := r.Method
-	path := r.URL.Path
-	qry := r.URL.Query()
+func (s *Server) handler(w http.ResponseWriter, req *http.Request) {
 	for i, exp := range s.expect {
-		if exp.method != method && exp.method != Anything {
+		if !requestMatches(req, exp) {
 			continue
-		}
-
-		if exp.path != Anything && !glob.Glob(exp.path, path) {
-			continue
-		}
-
-		if exp.qry != nil {
-			found := false
-			for k, v := range *exp.qry {
-				if !qry.Has(k) {
-					break
-				}
-				if elementsMatch(v, qry[k]) {
-					found = true
-				}
-			}
-			if !found {
-				continue
-			}
 		}
 
 		for j := 0; j < len(exp.headers); j += 2 {
@@ -149,7 +127,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if exp.fn != nil {
-			exp.fn(w, r)
+			exp.fn(w, req)
 		} else {
 			w.WriteHeader(exp.status)
 			if len(exp.body) > 0 {
@@ -164,7 +142,35 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.t.Errorf("Unexpected call to %s %s", method, path)
+	s.t.Errorf("Unexpected call to %s %s", req.Method, req.URL.String())
+}
+
+func requestMatches(req *http.Request, exp *Expectation) bool {
+	if exp.method != req.Method && exp.method != Anything {
+		return false
+	}
+
+	if exp.path != Anything && !glob.Glob(exp.path, req.URL.Path) {
+		return false
+	}
+
+	qry := req.URL.Query()
+	if exp.qry != nil {
+		found := false
+		for k, v := range *exp.qry {
+			if !qry.Has(k) {
+				break
+			}
+			if elementsMatch(v, qry[k]) {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
 }
 
 // On creates an expectation of a request on the server.
@@ -212,10 +218,10 @@ func (s *Server) AssertExpectations() {
 
 		switch exp.called {
 		case -1:
-			s.t.Errorf("mock: server: Expected a call to %s but got none", call)
+			s.t.Errorf("Expected a call to %s but got none", call)
 		case 0:
 		default:
-			s.t.Errorf("mock: server: Expected a call to %s %d times but got called %d times", call, exp.times, exp.times-exp.called)
+			s.t.Errorf("Expected a call to %s %d times but got called %d times", call, exp.times, exp.times-exp.called)
 		}
 	}
 }
