@@ -75,7 +75,7 @@ func (t *SubT) runCleanups() {
 	}
 }
 
-// Cleanup adds a cleanup function
+// Cleanup adds a cleanup function.
 func (t *SubT) Cleanup(fn func()) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
