@@ -20,6 +20,8 @@ func TestServer_HandlesExpectation(t *testing.T) {
 	res, err := http.Get(s.URL() + "/test/path")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesExpectationWithQuery(t *testing.T) {
@@ -31,6 +33,7 @@ func TestServer_HandlesExpectationWithQuery(t *testing.T) {
 	res, err := http.Get(s.URL() + "/test/path?p=some%2Fpath")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesAnythingMethodExpectation(t *testing.T) {
@@ -42,6 +45,7 @@ func TestServer_HandlesAnythingMethodExpectation(t *testing.T) {
 	res, err := http.Post(s.URL()+"/test/path", "text/plain", bytes.NewReader([]byte{}))
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesAnythingPathExpectation(t *testing.T) {
@@ -53,6 +57,7 @@ func TestServer_HandlesAnythingPathExpectation(t *testing.T) {
 	res, err := http.Get(s.URL() + "/test/path")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesWildcardPathExpectation(t *testing.T) {
@@ -64,6 +69,7 @@ func TestServer_HandlesWildcardPathExpectation(t *testing.T) {
 	res, err := http.Get(s.URL() + "/test/path")
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesUnexpectedMethodRequest(t *testing.T) {
@@ -130,6 +136,8 @@ func TestServer_HandlesExpectationNTimes(t *testing.T) {
 	_, _ = http.Get(s.URL() + "/test/path")
 	_, _ = http.Get(s.URL() + "/test/path")
 	_, _ = http.Get(s.URL() + "/test/path")
+
+	s.AssertExpectations()
 }
 
 func TestServer_HandlesExpectationUnlimitedTimes(t *testing.T) {
@@ -146,6 +154,8 @@ func TestServer_HandlesExpectationUnlimitedTimes(t *testing.T) {
 
 	_, _ = http.Get(s.URL() + "/test/path")
 	_, _ = http.Get(s.URL() + "/test/path")
+
+	s.AssertExpectations()
 }
 
 func TestServer_ExpectationReturnsBodyBytes(t *testing.T) {

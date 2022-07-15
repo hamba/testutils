@@ -216,11 +216,10 @@ func (s *Server) AssertExpectations() {
 			call += exp.qry.Encode()
 		}
 
-		switch exp.called {
-		case -1:
+		switch {
+		case exp.called == -1:
 			s.t.Errorf("Expected a call to %s but got none", call)
-		case 0:
-		default:
+		case exp.called > 0:
 			s.t.Errorf("Expected a call to %s %d times but got called %d times", call, exp.times, exp.times-exp.called)
 		}
 	}
