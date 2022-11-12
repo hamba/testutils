@@ -16,3 +16,5 @@ Install with:
 ```shell
 go get github.com/hamba/testutils
 ```
+
+**Note:** This project has renamed the default branch from `master` to `main`. You will need to update your local environment.
