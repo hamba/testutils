@@ -21,8 +21,10 @@ import (
 	"time"
 )
 
-// DefaultPolicy is the default retry policy used with Run.
-var DefaultPolicy = &Timer{timeout: 5 * time.Second, sleep: 10 * time.Millisecond}
+// DefaultPolicy is a function that returns the default retry policy used with Run.
+var DefaultPolicy = func() Policy {
+	return &Timer{timeout: 5 * time.Second, sleep: 10 * time.Millisecond}
+}
 
 // TestingT represents a partial *testing.T.
 type TestingT interface {
@@ -130,7 +132,7 @@ func (t *SubT) FailNow() {
 
 // Run reties fn with the default retry policy.
 func Run(t TestingT, fn func(t *SubT)) {
-	RunWith(t, DefaultPolicy, fn)
+	RunWith(t, DefaultPolicy(), fn)
 }
 
 // RunWith retires fn with policy p.
