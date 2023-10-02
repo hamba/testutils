@@ -27,6 +27,7 @@ linters:
     - ifshort # deprecated
     - nosnakecase # deprecated
     - structcheck # deprecated
+    - depguard
     - exhaustive
     - exhaustruct
     - gci
