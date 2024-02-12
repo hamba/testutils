@@ -1,6 +1,6 @@
 module github.com/hamba/testutils
 
-go 1.20
+go 1.21
 
 require (
 	github.com/ryanuber/go-glob v1.0.0
