@@ -235,10 +235,10 @@ func elementsMatch(a, b []string) bool {
 	bLen := len(b)
 
 	visited := make([]bool, bLen)
-	for i := 0; i < aLen; i++ {
+	for i := range aLen {
 		found := false
 		element := a[i]
-		for j := 0; j < bLen; j++ {
+		for j := range bLen {
 			if visited[j] {
 				continue
 			}
