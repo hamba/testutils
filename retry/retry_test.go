@@ -1,6 +1,7 @@
 package retry_test
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -61,8 +62,11 @@ func TestRunWith_HandlesFailing(t *testing.T) {
 	mockT.On("Log", []interface{}{"test message"}).Once()
 	mockT.On("FailNow").Once()
 
-	var wg sync.WaitGroup
-	var runs int
+	var (
+		wg   sync.WaitGroup
+		runs int
+		ctxs []context.Context
+	)
 
 	wg.Add(1)
 	start := time.Now()
@@ -70,6 +74,7 @@ func TestRunWith_HandlesFailing(t *testing.T) {
 		defer wg.Done()
 		retry.RunWith(mockT, retry.NewCounter(3, 10*time.Millisecond), func(t *retry.SubT) {
 			runs++
+			ctxs = append(ctxs, t.Context())
 			t.Fatal("test message")
 		})
 	}()
@@ -79,6 +84,13 @@ func TestRunWith_HandlesFailing(t *testing.T) {
 	mockT.AssertExpectations(t)
 	assert.Equal(t, 3, runs)
 	assert.InDelta(t, 30*time.Millisecond, dur, timeDeltaAllowed)
+	for _, ctx := range ctxs {
+		select {
+		case <-ctx.Done():
+		default:
+			assert.Fail(t, "expected context to be canceled")
+		}
+	}
 }
 
 func TestRunWith_RunsCleanup(t *testing.T) {

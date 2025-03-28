@@ -14,6 +14,7 @@ A simple usage is as simple as
 package retry
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
@@ -36,21 +37,30 @@ type tHelper interface {
 	Helper()
 }
 
+type tContext interface {
+	Context() context.Context
+}
+
 // SubT is a partial implementation of the standard testing T.
 type SubT struct {
 	mu       sync.Mutex
 	logs     []string
 	failed   bool
 	cleanups []func()
+
+	ctx       context.Context
+	cancelCtx context.CancelFunc
 }
 
-func (t *SubT) reset() {
+func (t *SubT) reset(baseCtx context.Context) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	t.logs = nil
 	t.failed = false
 	t.cleanups = t.cleanups[:0]
+
+	t.ctx, t.cancelCtx = context.WithCancel(baseCtx)
 }
 
 func (t *SubT) log(s string) {
@@ -61,6 +71,10 @@ func (t *SubT) log(s string) {
 }
 
 func (t *SubT) runCleanups() {
+	if t.cancelCtx != nil {
+		t.cancelCtx()
+	}
+
 	for {
 		var cleanup func()
 		t.mu.Lock()
@@ -75,6 +89,12 @@ func (t *SubT) runCleanups() {
 		}
 		cleanup()
 	}
+}
+
+// Context returns a context that is canceled just before
+// Cleanup-registered functions are called.
+func (t *SubT) Context() context.Context {
+	return t.ctx
 }
 
 // Cleanup adds a cleanup function.
@@ -141,10 +161,15 @@ func RunWith(t TestingT, p Policy, fn func(t *SubT)) {
 		h.Helper()
 	}
 
+	baseCtx := context.Background()
+	if c, ok := t.(tContext); ok {
+		baseCtx = c.Context()
+	}
+
 	tt := &SubT{}
 
 	for p.Next() {
-		tt.reset()
+		tt.reset(baseCtx)
 
 		var wg sync.WaitGroup
 		wg.Add(1)
