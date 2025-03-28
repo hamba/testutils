@@ -36,3 +36,7 @@ linters:
         - G103
   exclusions:
     generated: lax
+    rules:
+      - linters:
+          - containedctx
+        path: retry/retry.go
