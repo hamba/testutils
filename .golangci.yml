@@ -1,6 +1,4 @@
 version: "2"
-run:
-  tests: false
 
 formatters:
   enable:
@@ -27,9 +25,12 @@ linters:
     - err113
     - exhaustive
     - exhaustruct
+    - funcorder
+    - funlen
     - gochecknoglobals
     - mnd
     - nlreturn
+    - paralleltest
     - varnamelen
     - wrapcheck
     - wsl
@@ -47,3 +48,6 @@ linters:
       - linters:
           - containedctx
         path: retry/retry.go
+      - linters:
+          - asasalint
+        path: _test.go

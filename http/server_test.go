@@ -1,8 +1,8 @@
 package http_test
 
 import (
-	"bytes"
-	"io/ioutil"
+	"context"
+	"io"
 	"net/http"
 	"testing"
 
@@ -17,11 +17,19 @@ func TestServer_HandlesExpectation(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path")
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 
 	s.AssertExpectations()
+
+	_ = res.Body.Close()
 }
 
 func TestServer_HandlesExpectationWithQuery(t *testing.T) {
@@ -30,10 +38,18 @@ func TestServer_HandlesExpectationWithQuery(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path?p=some%2Fpath")
 
-	res, err := http.Get(s.URL() + "/test/path?p=some%2Fpath")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path?p=some%2Fpath", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 	s.AssertExpectations()
+
+	_ = res.Body.Close()
 }
 
 func TestServer_HandlesAnythingMethodExpectation(t *testing.T) {
@@ -42,10 +58,18 @@ func TestServer_HandlesAnythingMethodExpectation(t *testing.T) {
 
 	s.On(httptest.Anything, "/test/path")
 
-	res, err := http.Post(s.URL()+"/test/path", "text/plain", bytes.NewReader([]byte{}))
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 	s.AssertExpectations()
+
+	_ = res.Body.Close()
 }
 
 func TestServer_HandlesAnythingPathExpectation(t *testing.T) {
@@ -54,10 +78,18 @@ func TestServer_HandlesAnythingPathExpectation(t *testing.T) {
 
 	s.On(http.MethodGet, httptest.Anything)
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 	s.AssertExpectations()
+
+	_ = res.Body.Close()
 }
 
 func TestServer_HandlesWildcardPathExpectation(t *testing.T) {
@@ -66,10 +98,18 @@ func TestServer_HandlesWildcardPathExpectation(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/*")
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 	s.AssertExpectations()
+
+	_ = res.Body.Close()
 }
 
 func TestServer_HandlesUnexpectedMethodRequest(t *testing.T) {
@@ -85,7 +125,15 @@ func TestServer_HandlesUnexpectedMethodRequest(t *testing.T) {
 
 	s.On("POST", "/")
 
-	_, _ = http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+
+	require.NoError(t, err)
+	_ = resp.Body.Close()
 }
 
 func TestServer_HandlesUnexpectedPathRequest(t *testing.T) {
@@ -102,7 +150,14 @@ func TestServer_HandlesUnexpectedPathRequest(t *testing.T) {
 
 	s.On(http.MethodGet, "/")
 
-	_, _ = http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	resp, _ := http.DefaultClient.Do(req)
+
+	_ = resp.Body.Close()
 }
 
 func TestServer_HandlesUnexpectedPathQueryRequest(t *testing.T) {
@@ -118,7 +173,14 @@ func TestServer_HandlesUnexpectedPathQueryRequest(t *testing.T) {
 	s.On(http.MethodGet, "/test/path?a=other")
 	s.On(http.MethodGet, "/test/path?p=something")
 
-	_, _ = http.Get(s.URL() + "/test/path?p=somethingelse")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path?p=somethingelse", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
 }
 
 func TestServer_HandlesExpectationNTimes(t *testing.T) {
@@ -133,9 +195,20 @@ func TestServer_HandlesExpectationNTimes(t *testing.T) {
 	t.Cleanup(s.Close)
 	s.On(http.MethodGet, "/test/path").Times(2)
 
-	_, _ = http.Get(s.URL() + "/test/path")
-	_, _ = http.Get(s.URL() + "/test/path")
-	_, _ = http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	resp, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	resp, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
 
 	s.AssertExpectations()
 }
@@ -152,8 +225,17 @@ func TestServer_HandlesExpectationUnlimitedTimes(t *testing.T) {
 	t.Cleanup(s.Close)
 	s.On(http.MethodGet, "/test/path")
 
-	_, _ = http.Get(s.URL() + "/test/path")
-	_, _ = http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	resp, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
 
 	s.AssertExpectations()
 }
@@ -164,10 +246,16 @@ func TestServer_ExpectationReturnsBodyBytes(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path").Returns(400, []byte("test"))
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 400, res.StatusCode)
-	b, _ := ioutil.ReadAll(res.Body)
+	b, _ := io.ReadAll(res.Body)
 	assert.Equal(t, []byte("test"), b)
 
 	_ = res.Body.Close()
@@ -179,10 +267,16 @@ func TestServer_ExpectationReturnsBodyString(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path").ReturnsString(400, "test")
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 400, res.StatusCode)
-	b, _ := ioutil.ReadAll(res.Body)
+	b, _ := io.ReadAll(res.Body)
 	assert.Equal(t, []byte("test"), b)
 
 	_ = res.Body.Close()
@@ -194,11 +288,17 @@ func TestServer_ExpectationReturnsStatusCode(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path").ReturnsStatus(400)
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 400, res.StatusCode)
-	b, _ := ioutil.ReadAll(res.Body)
-	assert.Len(t, b, 0)
+	b, _ := io.ReadAll(res.Body)
+	assert.Empty(t, b)
 
 	_ = res.Body.Close()
 }
@@ -209,9 +309,15 @@ func TestServer_ExpectationReturnsHeaders(t *testing.T) {
 
 	s.On(http.MethodGet, "/test/path").Header("foo", "bar").ReturnsStatus(200)
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
 	require.NoError(t, err)
-	v := res.Header.Get("foo")
+	res, err := http.DefaultClient.Do(req)
+
+	require.NoError(t, err)
+	v := res.Header.Get("Foo")
 	assert.Equal(t, "bar", v)
 
 	_ = res.Body.Close()
@@ -221,13 +327,21 @@ func TestServer_ExpectationUsesHandleFunc(t *testing.T) {
 	s := httptest.NewServer(t)
 	t.Cleanup(s.Close)
 
-	s.On(http.MethodGet, "/test/path").Handle(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(400)
+	s.On(http.MethodGet, "/test/path").Handle(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
 	})
 
-	res, err := http.Get(s.URL() + "/test/path")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/test/path", nil)
+	require.NoError(t, err)
+	res, err := http.DefaultClient.Do(req)
+
 	require.NoError(t, err)
 	assert.Equal(t, 400, res.StatusCode)
+
+	_ = res.Body.Close()
 }
 
 func TestServer_AssertExpectations(t *testing.T) {
@@ -242,10 +356,18 @@ func TestServer_AssertExpectations(t *testing.T) {
 	t.Cleanup(s.Close)
 	s.On(http.MethodGet, "/").Times(1)
 
-	_, err := http.Get(s.URL() + "/")
-	assert.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL()+"/", nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+
+	require.NoError(t, err)
 
 	s.AssertExpectations()
+
+	_ = resp.Body.Close()
 }
 
 func TestServer_AssertExpectationsOnUnlimited(t *testing.T) {

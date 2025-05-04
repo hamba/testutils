@@ -8,6 +8,8 @@ import (
 )
 
 func TestT(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		fn         func(t *SubT)
@@ -73,8 +75,10 @@ func TestT(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			exited := true
 			retryT := &SubT{}
 
@@ -82,14 +86,14 @@ func TestT(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				tt.fn(retryT)
+				test.fn(retryT)
 				exited = false
 			}()
 			wg.Wait()
 
-			assert.Equal(t, tt.wantLog, retryT.logs)
-			assert.Equal(t, tt.wantFailed, retryT.failed)
-			assert.Equal(t, tt.wantExit, exited)
+			assert.Equal(t, test.wantLog, retryT.logs)
+			assert.Equal(t, test.wantFailed, retryT.failed)
+			assert.Equal(t, test.wantExit, exited)
 		})
 	}
 }
