@@ -4,12 +4,19 @@ run:
 
 formatters:
   enable:
+    - gci
     - gofmt
     - gofumpt
     - goimports
   settings:
     gofumpt:
       extra-rules: true
+    gci:
+      sections:
+        - standard
+        - default
+        - blank
+        - dot
   exclusions:
     generated: lax
 
