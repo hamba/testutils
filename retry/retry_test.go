@@ -45,7 +45,7 @@ func TestRunWith_AllowsPassing(t *testing.T) {
 	start := time.Now()
 	go func() {
 		defer wg.Done()
-		retry.RunWith(mockT, retry.NewCounter(3, 10*time.Millisecond), func(t *retry.SubT) {
+		retry.RunWith(mockT, retry.NewCounter(3, 10*time.Millisecond), func(*retry.SubT) {
 			runs++
 		})
 	}()
