@@ -83,12 +83,10 @@ func TestT(t *testing.T) {
 			retryT := &SubT{}
 
 			var wg sync.WaitGroup
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				test.fn(retryT)
 				exited = false
-			}()
+			})
 			wg.Wait()
 
 			assert.Equal(t, test.wantLog, retryT.logs)
