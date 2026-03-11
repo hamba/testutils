@@ -15,7 +15,7 @@ const timeDeltaAllowed = float64(25 * time.Millisecond)
 
 func TestRun(t *testing.T) {
 	mockT := new(MockTestingT)
-	mockT.On("Log", []interface{}{"test message"}).Once()
+	mockT.On("Log", []any{"test message"}).Once()
 	mockT.On("FailNow").Once()
 
 	var wg sync.WaitGroup
@@ -59,7 +59,7 @@ func TestRunWith_AllowsPassing(t *testing.T) {
 
 func TestRunWith_HandlesFailing(t *testing.T) {
 	mockT := new(MockTestingT)
-	mockT.On("Log", []interface{}{"test message"}).Once()
+	mockT.On("Log", []any{"test message"}).Once()
 	mockT.On("FailNow").Once()
 
 	var (
@@ -100,14 +100,12 @@ func TestRunWith_RunsCleanup(t *testing.T) {
 	var wg sync.WaitGroup
 	var runs int
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		retry.RunWith(mockT, retry.NewCounter(3, 10*time.Millisecond), func(t *retry.SubT) {
 			t.Cleanup(func() { runs++ })
 			t.FailNow()
 		})
-	}()
+	})
 	wg.Wait()
 
 	mockT.AssertExpectations(t)
@@ -148,7 +146,7 @@ type MockTestingT struct {
 	mock.Mock
 }
 
-func (m *MockTestingT) Log(args ...interface{}) {
+func (m *MockTestingT) Log(args ...any) {
 	m.Called(args)
 }
 

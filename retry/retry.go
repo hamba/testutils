@@ -29,7 +29,7 @@ var DefaultPolicy = func() Policy {
 
 // TestingT represents a partial *testing.T.
 type TestingT interface {
-	Log(args ...interface{})
+	Log(args ...any)
 	FailNow()
 }
 
@@ -106,35 +106,35 @@ func (t *SubT) Cleanup(fn func()) {
 }
 
 // Log adds a log line to the current test run.
-func (t *SubT) Log(args ...interface{}) {
+func (t *SubT) Log(args ...any) {
 	t.log(fmt.Sprintln(args...))
 }
 
 // Logf adds a formatted log line to the current test run.
-func (t *SubT) Logf(format string, args ...interface{}) {
+func (t *SubT) Logf(format string, args ...any) {
 	t.log(fmt.Sprintf(format, args...))
 }
 
 // Error adds a log line and fails the current test run.
-func (t *SubT) Error(args ...interface{}) {
+func (t *SubT) Error(args ...any) {
 	t.log(fmt.Sprintln(args...))
 	t.Fail()
 }
 
 // Errorf adds a formatted log line and fails the current test run.
-func (t *SubT) Errorf(format string, args ...interface{}) {
+func (t *SubT) Errorf(format string, args ...any) {
 	t.log(fmt.Sprintf(format, args...))
 	t.Fail()
 }
 
 // Fatal adds a log line, fails the current test run and exits immediately.
-func (t *SubT) Fatal(args ...interface{}) {
+func (t *SubT) Fatal(args ...any) {
 	t.log(fmt.Sprintln(args...))
 	t.FailNow()
 }
 
 // Fatalf adds a formatted log line, fails the current test run and exits immediately.
-func (t *SubT) Fatalf(format string, args ...interface{}) {
+func (t *SubT) Fatalf(format string, args ...any) {
 	t.log(fmt.Sprintf(format, args...))
 	t.FailNow()
 }
