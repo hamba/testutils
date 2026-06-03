@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+name: govulncheck
+jobs:
+  govulncheck:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run govalncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: ''
+          go-version-file: 'go.mod'
